@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# 源目录路径
+SOURCE_DIR="/share/Public/video-A/115download"
+# 目标目录路径
+TARGET_DIR="/share/Public/video-A/115"
+
+# ServerChan的SCKEY，确保正确设置这个值
+SCKEY=""
+
+# 创建一个空的字符串来存储移动的文件名
+MOVED_FILES=""
+
+# 检查目标目录是否存在，不存在则创建
+if [ ! -d "$TARGET_DIR" ]; then
+  mkdir -p "$TARGET_DIR"
+fi
+
+# 标记是否有文件被移动
+FILES_MOVED=false
+
+# 使用find命令找到所有大于500MB的文件，并迭代处理每一个文件
+while IFS= read -r file; do
+  # 移动文件
+  mv "$file" "$TARGET_DIR"
+  #标记文件被移动
+  FILES_MOVED=true
+  # 将移动的文件名添加到MOVED_FILES变量，以Markdown格式
+  MOVED_FILES+="- ${file##*/}
+  "
+done < <(find "$SOURCE_DIR" -type f -size +524288000c)
+
+# 如果某些文件被移动,发送消息到ServerChan
+if [[ ! -z "$MOVED_FILES" ]]; then
+  # 构造Markdown格式的消息内容
+  MSG="### 移动完成! 所有子目录已删除
+  $MOVED_FILES"
+  # 使用curl发送POST请求到ServerChan
+  curl -s -o /dev/null -X POST "https://sctapi.ftqq.com/$SCKEY.send" -H 'Content-type: application/x-www-form-urlencoded' -d "text=文件移动" -d "desp=$MSG"
+
+  # 删除源目录下的所有子目录
+  find "$SOURCE_DIR" -mindepth 1 -type d -exec rm -rf {} +
+fi
