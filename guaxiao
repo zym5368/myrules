@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# 指定docker命令的完整路径
+DOCKER_CMD="/share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker"
+
+# ServerChan的SCKEY，确保它是正确的
+SCKEY=""
+
+# 计算日期以便用于日志文件名
+LOG_DATE=$(date +'%Y-%m-%d_%H-%M')
+LOGFILE="/share/Public/video-A/115/logs/$LOG_DATE.log"
+
+# 运行docker容器并将输出重定向到日志文件
+$DOCKER_CMD run --rm --name mdc \
+  -v /share/Public/video-A/115:/source \
+  -v /share/Public/video-A/115/output:/output \
+  -v /share/Container/mdc/config:/config/.mdc \
+  -e UID=1000 \
+  -e GID=100 \
+  -e ARGS="-o" \
+  mvdctop/mdc > "$LOGFILE" 2>&1
+
+# 检查容器是否成功运行
+if [ $? -eq 0 ]; then
+# 提取日志中匹配"[+]Output Folder =>"字段的行并计算条数
+NUM_OF_OUTPUT_FOLDERS=$(grep -c "Output Folder =>" "$LOGFILE")
+    
+    # 构造ServerChan消息内容
+    MSG="- **$NUM_OF_OUTPUT_FOLDERS** 部影片"
+    
+    # 发送消息到ServerChan
+    curl -s -o /dev/null -X POST "https://sctapi.ftqq.com/$SCKEY.send" \
+        -H 'Content-type: application/x-www-form-urlencoded' \
+        --data-urlencode "text=刮削完毕!" --data-urlencode "desp=$MSG"
+fi
