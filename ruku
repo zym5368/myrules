@@ -34,9 +34,9 @@ done
 # 检查是否有文件夹被移动
 if [[ $count_subdir_moved -gt 0 || $count_dir_moved -gt 0 ]]; then
   # 构造ServerChan消息内容
-  MSG="移动了 $count_subdir_moved 个子目录和 $count_dir_moved 个完整目录。n$MSG"
+  MSG="已入库 $count_subdir_moved 个子目录和 $count_dir_moved 个完整目录。n$MSG"
   # 发送消息到ServerChan
   curl -s -o /dev/null -X POST "https://sctapi.ftqq.com/$SCKEY.send" 
       -H 'Content-type: application/x-www-form-urlencoded' 
-      --data-urlencode "text=目录移动通知" --data-urlencode "desp=$MSG"
+      --data-urlencode "text=入库通知" --data-urlencode "desp=$MSG"
 fi
