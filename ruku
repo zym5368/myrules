@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# 源根目录和目标根目录路径
+SOURCE_ROOT_DIR="/share/Public/video-A/115/output"
+TARGET_ROOT_DIR="/share/Public/video-A/AV"
+
+# ServerChan的SCKEY，确保正确设置这个值
+SCKEY="你的SCKEY"
+
+# 初始化计数器
+count_subdir_moved=0
+count_dir_moved=0
+
+# 遍历源根目录下的每个直接子目录
+for source_subdir in "$SOURCE_ROOT_DIR"/*/ ; do
+  # 提取源子目录的基名（例如：A）
+  subdir_name=$(basename "$source_subdir")
+  
+  # 构建相应的目标子目录路径
+  target_subdir="$TARGET_ROOT_DIR/$subdir_name"
+  
+  # 检查目标子目录是否存在
+  if [ -d "$target_subdir" ]; then
+    # 存在，所以移动源子目录中的所有内容到目标子目录中
+    echo "目标目录 $target_subdir 存在，移动 $source_subdir 下的文件。"
+    mv "$source_subdir"/* "$target_subdir/"
+  else
+    # 如果目标目录不存在，直接移动整个源子目录到目标目录中
+    echo "目标目录 $target_subdir 不存在，移动整个 $source_subdir 到 $TARGET_ROOT_DIR 中。"
+    mv "$source_subdir" "$TARGET_ROOT_DIR"
+  fi
+done
+
+# 检查是否有文件夹被移动
+if [[ $count_subdir_moved -gt 0 || $count_dir_moved -gt 0 ]]; then
+  # 构造ServerChan消息内容
+  MSG="移动了 $count_subdir_moved 个子目录和 $count_dir_moved 个完整目录。n$MSG"
+  # 发送消息到ServerChan
+  curl -s -o /dev/null -X POST "https://sctapi.ftqq.com/$SCKEY.send" 
+      -H 'Content-type: application/x-www-form-urlencoded' 
+      --data-urlencode "text=目录移动通知" --data-urlencode "desp=$MSG"
+fi
