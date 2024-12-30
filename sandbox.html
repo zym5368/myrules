@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sandbox</title>
+</head>
+<body>
+    <script>
+        console.log("Sandbox page loaded.");
+
+        window.addEventListener("message", function (event) {
+            const code = event.data.code;
+            console.log("Sandbox received code to execute:", code);
+            let result;
+
+            try {
+                result = eval(code);
+                console.log("Code executed successfully. Result:", result);
+            } catch (e) {
+                result = `Error: ${e.message}`;
+                console.error("Error executing code:", e);
+            }
+
+            console.log("Sending result back to main script.");
+            event.source.postMessage({ messageType: "sandboxResult", result: result }, "*");
+        });
+    </script>
+</body>
+</html>
